@@ -1747,6 +1747,19 @@ class ToolFrame(CNCRibbon.PageFrame):
 		self.probeDistance.bind('<KeyRelease>',   self.setProbeParams)
 		self.probeDistance.bind('<FocusOut>', self.setProbeParams)
 
+		# --- Turn spindle on then wait before continuing ---
+		row += 1
+		col = 0
+		Label(lframe, text=_("Wait after spindle restart:")).grid(row=row, column=col, sticky=E)
+		col += 1
+		self.spindlewaitstart = tkExtra.FloatEntry(lframe, background="White", width=5)
+		self.spindlewaitstart.grid(row=row, column=col, sticky=EW)
+		tkExtra.Balloon.set(self.spindlewaitstart,
+							_("After a tool change wait for X seconds before continuing g-code"))
+		self.addWidget(self.spindlewaitstart)
+		self.spindlewaitstart.bind('<KeyRelease>', self.setProbeParams)
+		self.spindlewaitstart.bind('<FocusOut>', self.setProbeParams)
+
 		# --- Calibration ---
 		row += 1
 		col = 0
@@ -1786,6 +1799,7 @@ class ToolFrame(CNCRibbon.PageFrame):
 		Utils.setFloat("Probe", "tooldistance",self.probeDistance.get())
 		Utils.setFloat("Probe", "toolheight",  self.toolHeight.get())
 		Utils.setFloat("Probe", "toolmz",      CNC.vars.get("toolmz",0.))
+		Utils.setFloat("Probe", "spindlewaitstart", self.spindlewaitstart.get())
 
 	#-----------------------------------------------------------------------
 	def loadConfig(self):
@@ -1801,6 +1815,7 @@ class ToolFrame(CNCRibbon.PageFrame):
 		self.toolHeight.set(   Utils.getFloat("Probe","toolheight"))
 		self.toolPolicy.set(TOOL_POLICY[Utils.getInt("Probe","toolpolicy",0)])
 		self.toolWait.set(TOOL_WAIT[Utils.getInt("Probe","toolwait",1)])
+		self.spindlewaitstart.set(Utils.getFloat("Probe","spindlewaitstart"))
 		CNC.vars["toolmz"] = Utils.getFloat("Probe","toolmz")
 		self.set()
 
@@ -1833,6 +1848,14 @@ class ToolFrame(CNCRibbon.PageFrame):
 		except:
 			tkMessageBox.showerror(_("Probe Tool Change Error"),
 					_("Invalid tool scanning distance entered"),
+					parent=self.winfo_toplevel())
+			return
+
+		try:
+			CNC.vars["spindlewaitstart"] = abs(float(self.spindlewaitstart.get()))
+		except:
+			tkMessageBox.showerror(_("Spinde wait time error"),
+					_("Invalid wait time entered"),
 					parent=self.winfo_toplevel())
 			return
 
@@ -1873,6 +1896,7 @@ class ToolFrame(CNCRibbon.PageFrame):
 		CNC.vars["toolprobez"] = float(self.probeZ.get())
 		CNC.vars["toolprobez"] = float(self.probeZ.get())
 		CNC.vars["tooldistance"] = float(self.probeDistance.get())
+		CNC.vars["spindlewaitstart"] = float(self.spindlewaitstart.get())
 
 	#-----------------------------------------------------------------------
 	def getChange(self):
